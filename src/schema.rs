@@ -39,6 +39,8 @@ diesel::table! {
         id -> Int4,
         #[max_length = 50]
         username -> Varchar,
+        #[max_length = 50]
+        discord_id -> Varchar,
         #[max_length = 255]
         password_hash -> Varchar,
         is_admin -> Nullable<Bool>,
