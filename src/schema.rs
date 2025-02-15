@@ -17,7 +17,7 @@ diesel::table! {
         id -> Int4,
         team_id -> Nullable<Int4>,
         #[max_length = 50]
-        name -> Varchar,
+        discord_id -> Varchar,
         #[max_length = 50]
         position -> Nullable<Varchar>,
         join_date -> Nullable<Date>,
