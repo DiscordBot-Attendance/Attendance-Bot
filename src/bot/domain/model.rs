@@ -3,6 +3,7 @@ use crate::schema::members;
 use crate::schema::teams;
 use crate::schema::users;
 
+use chrono::NaiveDate;
 use chrono::NaiveDateTime;
 use diesel::prelude::*;
 use serde::{Deserialize, Serialize};
@@ -19,7 +20,7 @@ pub struct User {
 }
 
 #[derive(Debug, Serialize, Deserialize, Insertable)]
-#[table_name = "users"]
+#[diesel(table_name = users)]
 pub struct NewUser {
     pub discord_id: String,
     pub username: String,
@@ -28,8 +29,7 @@ pub struct NewUser {
     pub created_at: chrono::NaiveDateTime,
 }
 
-#[derive(Debug, Serialize, Deserialize, Queryable, Insertable)]
-#[table_name = "teams"]
+#[derive(Debug, Serialize, Deserialize, Queryable)]
 pub struct Team {
     pub id: i32,
     pub name: String,
@@ -37,12 +37,19 @@ pub struct Team {
     pub created_at: chrono::NaiveDateTime,
 }
 
-// #[derive(Debug, Serialize, Deserialize, Queryable)]
-// #[table_name = "members"]
-// pub struct Member {
-//     pub id: i32,
-//     pub team_id: i32,
-//     pub name: String,
-//     pub position: String,
-//     pub join_date: chrono::NaiveDateTime,
-// }
+#[derive(Debug, Serialize, Deserialize, Queryable, Insertable)]
+#[diesel(table_name = teams)]
+pub struct NewTeam {
+    pub name: String,
+    pub admin_id: i32,
+    pub created_at: chrono::NaiveDateTime,
+}
+
+#[derive(Debug, Serialize, Deserialize, Queryable, Insertable)]
+#[diesel(table_name = members)]
+pub struct NewMember<'a> {
+    pub discord_id: &'a str,
+    pub team_id: i32,
+    pub position: String,
+    pub join_date: Option<NaiveDate>,
+}
