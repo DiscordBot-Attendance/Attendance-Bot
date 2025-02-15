@@ -1,6 +1,11 @@
+use crate::bot::application::services::team_service;
+use crate::bot::domain::model::User;
 use crate::bot::infrastructure::persistence::user_repository;
 use crate::config::database::establish_connection;
 use crate::{bot::application::services::auth_service, config::database::DBPool};
+use diesel::query_dsl::methods::{FilterDsl, SelectDsl};
+use diesel::ExpressionMethods;
+use diesel::RunQueryDsl;
 use serenity::{
     async_trait,
     model::{channel::Message, gateway::Ready},
@@ -110,6 +115,127 @@ impl EventHandler for Handler {
                     .say(&ctx.http, "Invalid credentials!")
                     .await
                     .unwrap(),
+            };
+        }
+
+        // create team
+        if msg.content.starts_with("!AB create_team") {
+            let args: Vec<&str> = msg.content.split_whitespace().collect();
+            if args.len() < 3 {
+                msg.channel_id
+                    .say(&ctx.http, "Usage: !AB create_team <team_name>")
+                    .await
+                    .unwrap();
+                return;
+            }
+
+            let team_name = args[2];
+
+            // db connection
+            let mut db_conn = conn
+                .get()
+                .map_err(|_| "Failed to get DB connection")
+                .unwrap();
+
+            // get admin id
+            use crate::schema::users::dsl::*;
+            let dc_user_id = msg.author.id.to_string();
+            let admin_result: Result<User, diesel::result::Error> = users
+                .filter(discord_id.eq(dc_user_id))
+                .first::<User>(&mut db_conn);
+
+            match admin_result {
+                Ok(admin) => match team_service::register_team(&mut db_conn, team_name, admin.id) {
+                    Ok(_) => {
+                        msg.channel_id
+                            .say(
+                                &ctx.http,
+                                format!("Team '{}' registered successfully!", team_name),
+                            )
+                            .await
+                            .unwrap();
+                    }
+                    Err(_) => {
+                        msg.channel_id
+                            .say(&ctx.http, "Failed to register team.")
+                            .await
+                            .unwrap();
+                    }
+                },
+                Err(diesel::NotFound) => {
+                    msg.channel_id
+                        .say(&ctx.http, "User not found!")
+                        .await
+                        .unwrap();
+                }
+                Err(e) => {
+                    println!("Database error: {:?}", e);
+                    msg.channel_id
+                        .say(&ctx.http, "An error occurred while fetching user.")
+                        .await
+                        .unwrap();
+                }
+            };
+        }
+
+        // add member
+        if msg.content.starts_with("!AB add_member") {
+            let args: Vec<&str> = msg.content.split_whitespace().collect();
+            if args.len() < 4 {
+                msg.channel_id
+                    .say(&ctx.http, "Usage: /admin add-member <team_name> @user")
+                    .await
+                    .unwrap();
+                return;
+            }
+
+            // db connection
+            let mut db_conn = conn
+                .get()
+                .map_err(|_| "Failed to get DB connection")
+                .unwrap();
+
+            let user_id = args[3].replace("<@", "").replace(">", "");
+
+            // get team id
+            use crate::schema::teams::dsl::*;
+            let team_name = args[2];
+            let team_result: Result<i32, diesel::result::Error> = teams
+                .filter(name.eq(team_name))
+                .select(id)
+                .first::<i32>(&mut db_conn);
+
+            match team_result {
+                Ok(team_id) => {
+                    match team_service::add_member(&mut db_conn, &user_id, team_id) {
+                        Ok(_) => msg
+                            .channel_id
+                            .say(
+                                &ctx.http,
+                                format!("Member {} assigned successsfully", &user_id),
+                            )
+                            .await
+                            .unwrap(),
+                        Err(_) => msg
+                            .channel_id
+                            .say(&ctx.http, "Failed to assign member.")
+                            .await
+                            .unwrap(),
+                    };
+                }
+                Err(diesel::NotFound) => {
+                    msg.channel_id
+                        .say(&ctx.http, "Team not found!")
+                        .await
+                        .unwrap();
+                }
+                Err(e) => {
+                    println!("Database error: {:?}", e);
+                    msg.channel_id
+                        .say(&ctx.http, "An error occurred while fetching team.")
+                        .await
+                        .unwrap();
+                }
             };
         }
     }
