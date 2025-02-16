@@ -1,7 +1,9 @@
-use crate::bot::application::services::team_service;
-use crate::bot::domain::model::User;
+use crate::bot::application::services::{attendance_service, team_service};
+use crate::bot::domain::model::{Team, User};
 use crate::bot::infrastructure::persistence::user_repository;
 use crate::config::database::establish_connection;
+
+use crate::schema::teams::{self, id as team_ids, name};
 use crate::{bot::application::services::auth_service, config::database::DBPool};
 use diesel::query_dsl::methods::{FilterDsl, SelectDsl};
 use diesel::ExpressionMethods;
@@ -33,6 +35,72 @@ impl EventHandler for Handler {
         if msg.content.starts_with("!AB help") {
             if let Err(e) = msg.channel_id.say(&ctx.http, HELP_MESSAGES).await {
                 println!("Error sending message: {e:?}");
+            }
+        }
+
+        // check-in member
+        if msg.content.starts_with("!AB check_in") {
+            use crate::schema::members::dsl::{discord_id, id as members_id, members};
+            use crate::schema::teams::dsl::{id as teams_id, name, teams};
+            let mut db_conn = conn
+                .get()
+                .map_err(|_| "Failed to get DB connection")
+                .unwrap();
+
+            let args: Vec<&str> = msg.content.split_whitespace().collect();
+            if args.len() < 4 {
+                msg.channel_id
+                    .say(&ctx.http, "Usage: !AB check-in <team-name> <status>")
+                    .await
+                    .unwrap();
+                return;
+            }
+
+            let team_name = args[2];
+            let status = args[3];
+
+            let user_id_str = msg.author.id.to_string();
+            let user_id = members
+                .filter(discord_id.eq(user_id_str))
+                .select(members_id)
+                .first::<i32>(&mut db_conn)
+                .ok();
+
+            // Fetch the team ID from the database
+            let team_id_result: Result<i32, diesel::result::Error> = teams
+                .filter(name.eq(team_name))
+                .select(teams_id)
+                .first::<i32>(&mut db_conn);
+
+            match team_id_result {
+                Ok(team_id) => {
+                    // Call the check-in service
+                    match attendance_service::check_in(
+                        &mut db_conn,
+                        user_id.expect("no user id"),
+                        team_id,
+                        status.to_string(),
+                    ) {
+                        Ok(_) => {
+                            msg.channel_id
+                                .say(&ctx.http, "Checked in successfully!")
+                                .await
+                                .unwrap();
+                        }
+                        Err(e) => {
+                            msg.channel_id
+                                .say(&ctx.http, format!("Failed to check in! {}", e))
+                                .await
+                                .unwrap();
+                        }
+                    }
+                }
+                Err(_) => {
+                    msg.channel_id
+                        .say(&ctx.http, "Team not found.")
+                        .await
+                        .unwrap();
+                }
             }
         }
 
@@ -183,7 +251,7 @@ impl EventHandler for Handler {
             let args: Vec<&str> = msg.content.split_whitespace().collect();
             if args.len() < 4 {
                 msg.channel_id
-                    .say(&ctx.http, "Usage: /admin add-member <team_name> @user")
+                    .say(&ctx.http, "Usage: !AB add-member <team_name> @user")
                     .await
                     .unwrap();
                 return;
@@ -195,7 +263,10 @@ impl EventHandler for Handler {
                 .map_err(|_| "Failed to get DB connection")
                 .unwrap();
 
-            let user_id = args[3].replace("<@", "").replace(">", "");
+            let user_id = args[3]
+                .replace("<@!", "")
+                .replace("<@", "")
+                .replace(">", "");
 
             // get team id
             use crate::schema::teams::dsl::*;
