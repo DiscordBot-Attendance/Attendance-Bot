@@ -62,15 +62,13 @@ pub fn check_out(conn: &mut PgConnection, user_id: i32) -> Result<(), String> {
     let now = Utc::now().naive_utc();
 
     let check_out_member = diesel::update(
-        member_attendance.filter(
-            member_id
-                .eq::<Option<i32>>(None)
-                .and(check_out_time.is_null()),
-        ),
+        member_attendance
+            .filter(member_id.eq(user_id))
+            .filter(check_out_time.is_null()),
     )
     .set(check_out_time.eq(now))
     .execute(conn)
-    .map_err(|_| "Failed to check out!")?;
+    .map_err(|e| format!("Failed to check out: {}", e))?;
 
     if check_out_member == 0 {
         return Err("No active check-in found!".to_string());
