@@ -1,9 +1,7 @@
 use crate::bot::application::services::{attendance_service, team_service};
-use crate::bot::domain::model::{Team, User};
+use crate::bot::domain::model::User;
 use crate::bot::infrastructure::persistence::user_repository;
 use crate::config::database::establish_connection;
-
-use crate::schema::teams::{self, id as team_ids, name};
 use crate::{bot::application::services::auth_service, config::database::DBPool};
 use diesel::query_dsl::methods::{FilterDsl, SelectDsl};
 use diesel::ExpressionMethods;

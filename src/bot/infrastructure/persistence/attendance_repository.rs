@@ -1,7 +1,6 @@
 use crate::{
-    bot::domain::model::{CheckInAttendance, CheckOutAttendance},
+    bot::domain::model::CheckInAttendance,
     schema::{
-        member_attendance::member_id,
         members::id,
         teams::dsl::{id as team_ids, teams},
     },
