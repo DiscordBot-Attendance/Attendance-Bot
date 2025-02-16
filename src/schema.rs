@@ -3,6 +3,7 @@
 diesel::table! {
     member_attendance (id) {
         id -> Int4,
+        team_id -> Nullable<Int4>,
         member_id -> Nullable<Int4>,
         date -> Date,
         check_in_time -> Nullable<Timestamp>,
@@ -50,6 +51,7 @@ diesel::table! {
 }
 
 diesel::joinable!(member_attendance -> members (member_id));
+diesel::joinable!(member_attendance -> teams (team_id));
 diesel::joinable!(members -> teams (team_id));
 diesel::joinable!(teams -> users (admin_id));
 
