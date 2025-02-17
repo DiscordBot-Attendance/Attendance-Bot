@@ -1,6 +1,42 @@
-use crate::bot::domain::model::{NewMember, NewTeam};
+use crate::bot::domain::model::{NewMember, NewTeam, Team};
+use crate::bot::domain::table::TeamTable;
 use chrono::Utc;
 use diesel::prelude::*;
+
+pub fn get_admin_teams(
+    conn: &mut PgConnection,
+    admin_discord_id: &str,
+) -> Result<Vec<TeamTable>, String> {
+    use crate::schema::teams::dsl::*;
+    use crate::schema::users::dsl::{discord_id, id as user_id, users};
+
+    // Find the admin's user ID
+    let admin_user_id: i32 = users
+        .filter(discord_id.eq(admin_discord_id))
+        .select(user_id)
+        .first(conn)
+        .map_err(|e| format!("Failed to find admin: {}", e))?;
+
+    // Fetch teams created by the admin
+    let teams_data: Vec<Team> = teams
+        .filter(admin_id.eq(admin_user_id))
+        .load::<Team>(conn)
+        .map_err(|e| format!("Failed to fetch teams: {}", e))?;
+
+    // Map the teams to the TeamTable struct
+    let team_tables = teams_data
+        .into_iter()
+        .map(|team| TeamTable {
+            name: team.name,
+            created_at: team
+                .created_at
+                .map(|dt| dt.format("%Y-%m-%d %H:%M:%S").to_string())
+                .unwrap_or_else(|| "N/A".to_string()),
+        })
+        .collect();
+
+    Ok(team_tables)
+}
 
 pub fn create_team(conn: &mut PgConnection, name: &str, admin: i32) -> Result<(), String> {
     use crate::schema::teams::dsl::teams;
