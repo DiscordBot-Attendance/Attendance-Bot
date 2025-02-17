@@ -33,8 +33,8 @@ pub struct NewUser {
 pub struct Team {
     pub id: i32,
     pub name: String,
-    pub admin_id: i32,
-    pub created_at: chrono::NaiveDateTime,
+    pub admin_id: Option<i32>,
+    pub created_at: Option<NaiveDateTime>,
 }
 
 #[derive(Debug, Serialize, Deserialize, Queryable, Insertable)]
@@ -63,4 +63,3 @@ pub struct CheckInAttendance {
     pub check_in_time: NaiveDateTime,
     pub status: String,
 }
-
