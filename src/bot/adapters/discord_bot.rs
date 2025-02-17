@@ -1,8 +1,10 @@
+use crate::bot::application::services::team_service::show_team;
 use crate::bot::application::services::{attendance_service, team_service};
 use crate::bot::domain::model::User;
 use crate::bot::infrastructure::persistence::user_repository;
 use crate::config::database::establish_connection;
 use crate::{bot::application::services::auth_service, config::database::DBPool};
+use chrono::NaiveDateTime;
 use diesel::query_dsl::methods::{FilterDsl, SelectDsl};
 use diesel::RunQueryDsl;
 use diesel::{ExpressionMethods, PgConnection};
@@ -12,6 +14,8 @@ use serenity::{
     model::{channel::Message, gateway::Ready},
     prelude::*,
 };
+use tabled::settings::Style;
+use tabled::Table;
 
 use crate::config::constant::HELP_MESSAGES;
 
@@ -66,6 +70,8 @@ impl EventHandler for Handler {
             self.handle_create_team(&ctx, &msg, &mut db_conn).await;
         } else if msg.content.starts_with("!AB add_member") {
             self.handle_add_member(&ctx, &msg, &mut db_conn).await;
+        } else if msg.content.starts_with("!AB show_team") {
+            self.handle_show_team(&ctx, &msg, &mut db_conn).await;
         }
     }
 
@@ -75,6 +81,37 @@ impl EventHandler for Handler {
 }
 
 impl Handler {
+    async fn handle_show_team(&self, ctx: &Context, msg: &Message, db_conn: &mut PgConnection) {
+        let admin_discord_id = msg.author.id.to_string();
+
+        let teams = match show_team(db_conn, &admin_discord_id[..]) {
+            Ok(teams) => teams,
+            Err(e) => {
+                self.send_message(&ctx, &msg.channel_id, &format!("Error: {}", e))
+                    .await;
+                return;
+            }
+        };
+
+        // Check if the admin has any teams
+        if teams.is_empty() {
+            self.send_message(&ctx, &msg.channel_id, "You have no teams.")
+                .await;
+            return;
+        }
+
+        // Create a table from the teams
+        let mut table = Table::new(teams);
+
+        // Send the table as a message
+        self.send_message(
+            &ctx,
+            &msg.channel_id,
+            &format!("Your teams:\n```\n{}\n```", table.with(Style::rounded())),
+        )
+        .await;
+    }
+
     async fn handle_check_in(&self, ctx: &Context, msg: &Message, db_conn: &mut PgConnection) {
         use crate::schema::members::dsl::{discord_id, id as members_id, members};
         use crate::schema::teams::dsl::{id as teams_id, name, teams};
