@@ -1,5 +1,5 @@
-use crate::bot::domain::model::{NewMember, NewTeam, Team};
-use crate::bot::domain::table::TeamTable;
+use crate::bot::domain::model::{Member, NewMember, NewTeam, Team};
+use crate::bot::domain::table::{MemberTable, TeamTable};
 use chrono::Utc;
 use diesel::prelude::*;
 
@@ -38,6 +38,38 @@ pub fn get_admin_teams(
     Ok(team_tables)
 }
 
+pub fn get_members(conn: &mut PgConnection, team_name: &str) -> Result<Vec<MemberTable>, String> {
+    use crate::schema::members::dsl::*;
+    use crate::schema::teams::dsl::{id as team_id_column, name as team_name_column, teams};
+
+    // Find the team ID by name
+    let team_ids: i32 = teams
+        .filter(team_name_column.eq(team_name))
+        .select(team_id_column)
+        .first(conn)
+        .map_err(|e| format!("Failed to find team : {}", e))?;
+
+    // Fetch members of the team
+    let members_data: Vec<Member> = members
+        .filter(team_id.eq(team_ids))
+        .load::<Member>(conn)
+        .map_err(|e| format!("Failed to fetch members for : {}", e))?;
+
+    // Map the members to the MemberTable struct
+    let member_tables = members_data
+        .into_iter()
+        .map(|member| MemberTable {
+            username: member.username,
+            join_date: member
+                .join_date
+                .map(|dt| dt.format("%Y-%m-%d").to_string())
+                .unwrap_or_else(|| "N/A".to_string()),
+        })
+        .collect();
+
+    Ok(member_tables)
+}
+
 pub fn create_team(conn: &mut PgConnection, name: &str, admin: i32) -> Result<(), String> {
     use crate::schema::teams::dsl::teams;
 
@@ -58,11 +90,13 @@ pub fn create_team(conn: &mut PgConnection, name: &str, admin: i32) -> Result<()
 pub fn assign_member(
     conn: &mut PgConnection,
     dc_id: &str,
+    username_string: String,
     team_id_value: i32,
 ) -> Result<(), String> {
     use crate::schema::members::dsl::*;
 
     let new_member = NewMember {
+        username: username_string,
         discord_id: dc_id,
         team_id: team_id_value,
         join_date: Some(Utc::now().naive_utc().into()),
