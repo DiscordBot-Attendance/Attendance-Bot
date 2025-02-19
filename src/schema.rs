@@ -17,6 +17,8 @@ diesel::table! {
     members (id) {
         id -> Int4,
         team_id -> Nullable<Int4>,
+        #[max_length = 100]
+        username -> Varchar,
         #[max_length = 50]
         discord_id -> Varchar,
         #[max_length = 50]
