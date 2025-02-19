@@ -1,10 +1,9 @@
-use crate::bot::application::services::team_service::show_team;
+use crate::bot::application::services::team_service::{get_members_by_team, show_team};
 use crate::bot::application::services::{attendance_service, team_service};
 use crate::bot::domain::model::User;
 use crate::bot::infrastructure::persistence::user_repository;
 use crate::config::database::establish_connection;
 use crate::{bot::application::services::auth_service, config::database::DBPool};
-use chrono::NaiveDateTime;
 use diesel::query_dsl::methods::{FilterDsl, SelectDsl};
 use diesel::RunQueryDsl;
 use diesel::{ExpressionMethods, PgConnection};
@@ -72,6 +71,8 @@ impl EventHandler for Handler {
             self.handle_add_member(&ctx, &msg, &mut db_conn).await;
         } else if msg.content.starts_with("!AB show_team") {
             self.handle_show_team(&ctx, &msg, &mut db_conn).await;
+        } else if msg.content.starts_with("!AB show_members") {
+            self.handle_show_members(&ctx, &msg, &mut db_conn).await;
         }
     }
 
@@ -315,11 +316,11 @@ impl Handler {
 
     async fn handle_add_member(&self, ctx: &Context, msg: &Message, db_conn: &mut PgConnection) {
         let args: Vec<&str> = msg.content.split_whitespace().collect();
-        if args.len() < 4 {
+        if args.len() < 6 {
             self.send_message(
                 &ctx,
                 &msg.channel_id,
-                "Usage: !AB add-member <team_name> @user",
+                "Usage: !AB add-member <team_name> @user as User_full_name",
             )
             .await;
             return;
@@ -329,6 +330,8 @@ impl Handler {
             .replace("<@!", "")
             .replace("<@", "")
             .replace(">", "");
+
+        let username = args[5].to_string();
 
         use crate::schema::teams::dsl::*;
         let team_name = args[2];
@@ -355,7 +358,7 @@ impl Handler {
             }
         };
 
-        match team_service::add_member(db_conn, &user_id, team_id) {
+        match team_service::add_member(db_conn, &user_id, username, team_id) {
             Ok(_) => {
                 self.send_message(
                     &ctx,
@@ -369,6 +372,52 @@ impl Handler {
                     .await;
             }
         }
+    }
+
+    async fn handle_show_members(&self, ctx: &Context, msg: &Message, db_conn: &mut PgConnection) {
+        let args: Vec<&str> = msg.content.split_whitespace().collect();
+        if args.len() < 3 {
+            self.send_message(&ctx, &msg.channel_id, "Usage: !AB show_members <team_name>")
+                .await;
+            return;
+        }
+
+        let team_name = args[2];
+
+        // Fetch members from the database
+        let members = match get_members_by_team(db_conn, team_name) {
+            Ok(members) => members,
+            Err(e) => {
+                eprintln!("❌ Error getting members for '{}': {}", team_name, e);
+                self.send_message(
+                    &ctx,
+                    &msg.channel_id,
+                    &format!("Error getting members: {}", e),
+                )
+                .await;
+                return;
+            }
+        };
+
+        // Check if there are any members
+        if members.is_empty() {
+            self.send_message(&ctx, &msg.channel_id, "No members found.")
+                .await;
+            return;
+        }
+
+        // Create a table from the members
+        let table = Table::new(members)
+            .with(Style::rounded()) // Apply rounded style to the table
+            .to_string();
+
+        // Send the table as a message
+        self.send_message(
+            &ctx,
+            &msg.channel_id,
+            &format!("Team members:\n```\n{}\n```", table),
+        )
+        .await;
     }
 
     async fn send_message(&self, ctx: &Context, channel_id: &ChannelId, message: &str) {
