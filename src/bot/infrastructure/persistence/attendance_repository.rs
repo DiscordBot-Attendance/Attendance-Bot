@@ -1,5 +1,8 @@
 use crate::{
-    bot::domain::model::CheckInAttendance,
+    bot::domain::{
+        model::{CheckInAttendance, Member, MemberAttendance},
+        table::MemberAttendanceTable,
+    },
     schema::{
         members::id,
         teams::dsl::{id as team_ids, teams},
@@ -75,4 +78,54 @@ pub fn check_out(conn: &mut PgConnection, user_id: i32) -> Result<(), String> {
     }
 
     Ok(())
+}
+
+pub fn get_member_attendance_by_team(
+    conn: &mut PgConnection,
+    team_name: &str,
+) -> Result<Vec<MemberAttendanceTable>, String> {
+    use crate::schema::{member_attendance, members, teams};
+
+    // Find the team ID by name
+    let team_id: i32 = teams::table
+        .filter(teams::name.eq(team_name))
+        .select(teams::id)
+        .first::<i32>(conn)
+        .map_err(|e| {
+            if e == diesel::result::Error::NotFound {
+                format!("Team '{}' not found", team_name)
+            } else {
+                format!("Failed to fetch team '{}': {}", team_name, e)
+            }
+        })?;
+
+    // Fetch attendance records for the team
+    let attendance_data: Vec<(MemberAttendance, Member)> = member_attendance::table
+        .inner_join(
+            members::table.on(members::id
+                .nullable()
+                .eq(member_attendance::member_id.nullable())),
+        )
+        .filter(member_attendance::team_id.eq(team_id))
+        .load::<(MemberAttendance, Member)>(conn)
+        .map_err(|e| format!("Failed to fetch attendance for team '{}': {}", team_name, e))?;
+
+    // Map the data to the MemberAttendanceTable struct
+    let attendance_tables = attendance_data
+        .into_iter()
+        .map(|(attendance, member)| MemberAttendanceTable {
+            username: member.username,
+            check_in_time: attendance
+                .check_in_time
+                .map(|time| time.format("%Y-%m-%d %H:%M:%S").to_string())
+                .unwrap_or_else(|| "N/A".to_string()),
+            check_out_time: attendance
+                .check_out_time
+                .map(|time| time.format("%Y-%m-%d %H:%M:%S").to_string())
+                .unwrap_or_else(|| "N/A".to_string()),
+            status: attendance.status.unwrap_or_else(|| "N/A".to_string()),
+        })
+        .collect();
+
+    Ok(attendance_tables)
 }
