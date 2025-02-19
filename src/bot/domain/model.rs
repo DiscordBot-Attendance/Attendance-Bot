@@ -65,6 +65,17 @@ pub struct NewMember<'a> {
     pub join_date: Option<NaiveDate>,
 }
 
+#[derive(Debug, Serialize, Deserialize, Queryable)]
+pub struct MemberAttendance {
+    pub id: i32,
+    pub team_id: Option<i32>,
+    pub member_id: Option<i32>,
+    pub date: NaiveDate,
+    pub check_in_time: Option<NaiveDateTime>,
+    pub check_out_time: Option<NaiveDateTime>,
+    pub status: Option<String>,
+}
+
 #[derive(Debug, Serialize, Deserialize, Queryable, Insertable)]
 #[diesel(table_name = member_attendance)]
 pub struct CheckInAttendance {
