@@ -6,9 +6,8 @@ pub struct TeamTable {
     pub created_at: String,
 }
 
-
 #[derive(Debug, Tabled)]
 pub struct MemberTable {
-    pub name: String,
-    pub created_at: String,
+    pub username: String,
+    pub join_date: String,
 }

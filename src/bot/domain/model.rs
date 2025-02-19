@@ -45,10 +45,21 @@ pub struct NewTeam {
     pub created_at: chrono::NaiveDateTime,
 }
 
+#[derive(Debug, Serialize, Deserialize, Queryable)]
+pub struct Member {
+    pub id: i32,
+    pub team_id: Option<i32>,
+    pub username: String,
+    pub discord_id: String,
+    pub position: Option<String>,
+    pub join_date: Option<NaiveDate>,
+}
+
 #[derive(Debug, Serialize, Deserialize, Queryable, Insertable)]
 #[diesel(table_name = members)]
 pub struct NewMember<'a> {
     pub discord_id: &'a str,
+    pub username: String,
     pub team_id: i32,
     pub position: String,
     pub join_date: Option<NaiveDate>,
