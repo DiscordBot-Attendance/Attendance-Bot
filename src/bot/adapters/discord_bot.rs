@@ -1,3 +1,4 @@
+use crate::bot::application::services::attendance_service::get_member_attendance;
 use crate::bot::application::services::team_service::{get_members_by_team, show_team};
 use crate::bot::application::services::{attendance_service, team_service};
 use crate::bot::domain::model::User;
@@ -73,6 +74,9 @@ impl EventHandler for Handler {
             self.handle_show_team(&ctx, &msg, &mut db_conn).await;
         } else if msg.content.starts_with("!AB show_members") {
             self.handle_show_members(&ctx, &msg, &mut db_conn).await;
+        } else if msg.content.starts_with("!AB show_member_attendance") {
+            self.handle_show_member_attendance(&ctx, &msg, &mut db_conn)
+                .await;
         }
     }
 
@@ -118,7 +122,7 @@ impl Handler {
         use crate::schema::teams::dsl::{id as teams_id, name, teams};
 
         let args: Vec<&str> = msg.content.split_whitespace().collect();
-        if args.len() < 4 {
+        if args.len() < 3 {
             self.send_message(
                 &ctx,
                 &msg.channel_id,
@@ -416,6 +420,60 @@ impl Handler {
             &ctx,
             &msg.channel_id,
             &format!("Team members:\n```\n{}\n```", table),
+        )
+        .await;
+    }
+
+    async fn handle_show_member_attendance(
+        &self,
+        ctx: &Context,
+        msg: &Message,
+        db_conn: &mut PgConnection,
+    ) {
+        let args: Vec<&str> = msg.content.split_whitespace().collect();
+        if args.len() < 2 {
+            self.send_message(
+                &ctx,
+                &msg.channel_id,
+                "Usage: !AB show_member_attendance <team_name>",
+            )
+            .await;
+            return;
+        }
+
+        let team_name = args[2];
+
+        // Fetch attendance data from the database
+        let attendance_data = match get_member_attendance(db_conn, team_name) {
+            Ok(data) => data,
+            Err(e) => {
+                self.send_message(&ctx, &msg.channel_id, &format!("Error: {}", e))
+                    .await;
+                return;
+            }
+        };
+
+        // Check if there are any attendance records
+        if attendance_data.is_empty() {
+            self.send_message(
+                &ctx,
+                &msg.channel_id,
+                "No attendance records found for this team.",
+            )
+            .await;
+            return;
+        }
+
+        // Create a table from the attendance data
+        let table = Table::new(attendance_data)
+            .with(Style::rounded()) // Apply rounded style to the table
+            .to_string();
+
+        // Send the table as a message
+        self.send_message(
+            &ctx,
+            &msg.channel_id,
+            &format!("Attendance for team '{}':\n```\n{}\n```", team_name, table),
         )
         .await;
     }
