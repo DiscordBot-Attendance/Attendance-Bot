@@ -69,22 +69,6 @@ Before running the bot, ensure you have the following:
 
 ⚠️ **Note:** Ensure you have the correct permissions and passwords for Admin-related commands.
 
-## 📂 Folder Structure
-
-```
-attendance-bot/
-│── src/
-│   ├── bot/
-│   │   ├── application/services/  # Business logic (check-in, checkout, etc.)
-│   │   ├── domain/                # Models & Entities
-│   │   ├── infrastructure/        # Database & persistence
-│   │   ├── adapters/              # Discord Bot Handlers
-│   ├── config/                    # Configuration files
-│   ├── main.rs                     # Entry point
-│── .env                             # Environment variables
-│── Cargo.toml                       # Dependencies
-```
-
 ## 📜 License
 
 This project is open-source under the MIT License.
