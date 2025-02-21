@@ -12,8 +12,8 @@ Hi! I'm the Attendance Bot. Here are the commands you can use:
 
 👤 **Member Management**  
 🔹 `!AB add_member {team_name} @member_name`  → Add a member to a team  
-🔹 `!AB show_member {team_name}`  → Show members of a team  
-🔹 `!AB show_member_attendance {team_name}`  → Show attendance for a team's members  
+🔹 `!AB show_members {team_name}`  → Show members of a team  
+🔹 `!AB show_members_attendance {team_name}`  → Show attendance for a team's members  
 
 ⏳ **Attendance Tracking**  
 🔹 `!AB check_in {team_name} {status}`  → Start session (Check-in)  
