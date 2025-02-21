@@ -3,6 +3,18 @@ use bcrypt::{hash, verify};
 use chrono::Utc;
 use diesel::prelude::*;
 
+/// Registers a new admin user in the database.
+///
+/// # Arguments
+/// * `conn` - A mutable reference to the PostgreSQL connection.
+/// * `discord_id` - The Discord ID of the user.
+/// * `username` - The username of the user.
+/// * `password` - The password of the user.
+///
+/// # Errors
+/// Returns an error if:
+/// - Password hashing fails.
+/// - Inserting the user into the database fails.
 pub fn register_admin(
     conn: &mut PgConnection,
     discord_id: &str,
@@ -29,6 +41,20 @@ pub fn register_admin(
     Ok(())
 }
 
+/// Authenticates an admin user by verifying their password.
+///
+/// # Arguments
+/// * `conn` - A mutable reference to the PostgreSQL connection.
+/// * `dc_id` - The Discord ID of the user.
+/// * `password` - The password to verify.
+///
+/// # Returns
+/// Returns `Ok(true)` if the password is valid, otherwise `Ok(false)`.
+///
+/// # Errors
+/// Returns an error if:
+/// - The user is not found in the database.
+/// - Password verification fails.
 pub fn authentication_admin(
     conn: &mut PgConnection,
     dc_id: &str,

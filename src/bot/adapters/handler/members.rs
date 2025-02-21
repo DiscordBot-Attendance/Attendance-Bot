@@ -5,6 +5,18 @@ use tabled::{settings::Style, Table};
 
 use crate::bot::application::services::team_service::get_members_by_team;
 
+/// Handles displaying the members of a specific team.
+///
+/// # Arguments
+/// * `ctx` - The context of the event.
+/// * `msg` - The message that triggered the event.
+/// * `db_conn` - A mutable reference to the PostgreSQL connection.
+///
+/// # Behavior
+/// - Parses the command arguments to extract the team name.
+/// - Fetches the members of the specified team from the database.
+/// - Displays the members in a formatted table.
+/// - Sends the table as a message back to the user.
 pub async fn handle_show_members(ctx: &Context, msg: &Message, db_conn: &mut PgConnection) {
     let args: Vec<&str> = msg.content.split_whitespace().collect();
     if args.len() < 3 {
@@ -41,6 +53,16 @@ pub async fn handle_show_members(ctx: &Context, msg: &Message, db_conn: &mut PgC
     .await;
 }
 
+/// Sends a message to a specific channel.
+///
+/// # Arguments
+/// * `ctx` - The context of the event.
+/// * `channel_id` - The ID of the channel to send the message to.
+/// * `message` - The message to send.
+///
+/// # Behavior
+/// - Attempts to send the message to the specified channel.
+/// - Logs an error if the message fails to send.
 async fn send_message(ctx: &Context, channel_id: &serenity::model::id::ChannelId, message: &str) {
     if let Err(e) = channel_id.say(&ctx.http, message).await {
         println!("Error sending message: {e:?}");

@@ -3,6 +3,19 @@ use crate::bot::domain::table::{MemberTable, TeamTable};
 use chrono::Utc;
 use diesel::prelude::*;
 
+/// Retrieves all teams created by a specific admin.
+///
+/// # Arguments
+/// * `conn` - A mutable reference to the PostgreSQL connection.
+/// * `admin_discord_id` - The Discord ID of the admin whose teams are being fetched.
+///
+/// # Returns
+/// Returns a `Vec<TeamTable>` containing the teams created by the admin.
+///
+/// # Errors
+/// Returns an error if:
+/// - The admin user cannot be found.
+/// - The teams cannot be fetched from the database.
 pub fn get_admin_teams(
     conn: &mut PgConnection,
     admin_discord_id: &str,
@@ -38,6 +51,19 @@ pub fn get_admin_teams(
     Ok(team_tables)
 }
 
+/// Retrieves all members of a specific team.
+///
+/// # Arguments
+/// * `conn` - A mutable reference to the PostgreSQL connection.
+/// * `team_name` - The name of the team whose members are being fetched.
+///
+/// # Returns
+/// Returns a `Vec<MemberTable>` containing the members of the team.
+///
+/// # Errors
+/// Returns an error if:
+/// - The team cannot be found.
+/// - The members cannot be fetched from the database.
 pub fn get_members(conn: &mut PgConnection, team_name: &str) -> Result<Vec<MemberTable>, String> {
     use crate::schema::members::dsl::*;
     use crate::schema::teams::dsl::{id as team_id_column, name as team_name_column, teams};
@@ -47,13 +73,13 @@ pub fn get_members(conn: &mut PgConnection, team_name: &str) -> Result<Vec<Membe
         .filter(team_name_column.eq(team_name))
         .select(team_id_column)
         .first(conn)
-        .map_err(|e| format!("Failed to find team : {}", e))?;
+        .map_err(|e| format!("Failed to find team: {}", e))?;
 
     // Fetch members of the team
     let members_data: Vec<Member> = members
         .filter(team_id.eq(team_ids))
         .load::<Member>(conn)
-        .map_err(|e| format!("Failed to fetch members for : {}", e))?;
+        .map_err(|e| format!("Failed to fetch members: {}", e))?;
 
     // Map the members to the MemberTable struct
     let member_tables = members_data
@@ -70,6 +96,15 @@ pub fn get_members(conn: &mut PgConnection, team_name: &str) -> Result<Vec<Membe
     Ok(member_tables)
 }
 
+/// Creates a new team in the database.
+///
+/// # Arguments
+/// * `conn` - A mutable reference to the PostgreSQL connection.
+/// * `name` - The name of the team to create.
+/// * `admin` - The ID of the admin creating the team.
+///
+/// # Errors
+/// Returns an error if the team cannot be created in the database.
 pub fn create_team(conn: &mut PgConnection, name: &str, admin: i32) -> Result<(), String> {
     use crate::schema::teams::dsl::teams;
 
@@ -87,6 +122,16 @@ pub fn create_team(conn: &mut PgConnection, name: &str, admin: i32) -> Result<()
     Ok(())
 }
 
+/// Assigns a member to a team.
+///
+/// # Arguments
+/// * `conn` - A mutable reference to the PostgreSQL connection.
+/// * `dc_id` - The Discord ID of the member.
+/// * `username_string` - The username of the member.
+/// * `team_id_value` - The ID of the team to which the member is being assigned.
+///
+/// # Errors
+/// Returns an error if the member cannot be assigned to the team.
 pub fn assign_member(
     conn: &mut PgConnection,
     dc_id: &str,

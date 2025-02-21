@@ -5,6 +5,18 @@ use tabled::{settings::Style, Table};
 
 use crate::bot::application::services::attendance_service::{self, get_member_attendance};
 
+/// Handles the check-in process for a member in a specific team.
+///
+/// # Arguments
+/// * `ctx` - The context of the event.
+/// * `msg` - The message that triggered the event.
+/// * `db_conn` - A mutable reference to the PostgreSQL connection.
+///
+/// # Behavior
+/// - Parses the command arguments to extract the team name and status.
+/// - Fetches the member ID and team ID from the database.
+/// - Records the check-in in the database.
+/// - Sends a success or error message back to the user.
 pub async fn handle_check_in(ctx: &Context, msg: &Message, db_conn: &mut PgConnection) {
     use crate::schema::members::dsl::{discord_id, id as members_id, members};
     use crate::schema::teams::dsl::{id as teams_id, name, teams};
@@ -57,6 +69,18 @@ pub async fn handle_check_in(ctx: &Context, msg: &Message, db_conn: &mut PgConne
     }
 }
 
+/// Handles the check-out process for a member.
+///
+/// # Arguments
+/// * `ctx` - The context of the event.
+/// * `msg` - The message that triggered the event.
+/// * `db_conn` - A mutable reference to the PostgreSQL connection.
+///
+/// # Behavior
+/// - Parses the command arguments to extract the team name.
+/// - Fetches the member ID from the database.
+/// - Records the check-out in the database.
+/// - Sends a success or error message back to the user.
 pub async fn handle_check_out(ctx: &Context, msg: &Message, db_conn: &mut PgConnection) {
     use crate::schema::members::dsl::{discord_id, id as members_id, members};
 
@@ -91,6 +115,18 @@ pub async fn handle_check_out(ctx: &Context, msg: &Message, db_conn: &mut PgConn
     }
 }
 
+/// Handles displaying the attendance records for members of a specific team.
+///
+/// # Arguments
+/// * `ctx` - The context of the event.
+/// * `msg` - The message that triggered the event.
+/// * `db_conn` - A mutable reference to the PostgreSQL connection.
+///
+/// # Behavior
+/// - Parses the command arguments to extract the team name.
+/// - Fetches the attendance records for the team from the database.
+/// - Displays the attendance records in a formatted table.
+/// - Sends the table as a message back to the user.
 pub async fn handle_show_member_attendance(
     ctx: &Context,
     msg: &Message,
@@ -143,6 +179,16 @@ pub async fn handle_show_member_attendance(
     .await;
 }
 
+/// Sends a message to a specific channel.
+///
+/// # Arguments
+/// * `ctx` - The context of the event.
+/// * `channel_id` - The ID of the channel to send the message to.
+/// * `message` - The message to send.
+///
+/// # Behavior
+/// - Attempts to send the message to the specified channel.
+/// - Logs an error if the message fails to send.
 async fn send_message(ctx: &Context, channel_id: &serenity::model::id::ChannelId, message: &str) {
     if let Err(e) = channel_id.say(&ctx.http, message).await {
         println!("Error sending message: {e:?}");
