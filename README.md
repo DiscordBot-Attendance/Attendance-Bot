@@ -32,6 +32,7 @@ Before running the bot, ensure you have the following:
    ```env
    DISCORD_TOKEN=your_bot_token
    DATABASE_URL=postgres://user:password@localhost/attendance_db
+   JWT_SECRET=RANDOM_SENTENCE
    ```
 3. Run database migrations (using Diesel ORM):
    ```sh
