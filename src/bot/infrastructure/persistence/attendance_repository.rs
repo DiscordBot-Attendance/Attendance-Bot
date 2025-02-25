@@ -35,10 +35,10 @@ pub fn check_in(
 
     // Check if the member_id exists in the members table
     let member_exists: bool = diesel::select(exists(
-        members.filter(id.eq(mem_id)), // id should be the primary key of members
+            members.filter(id.eq(mem_id)), // id should be the primary key of members
     ))
-    .get_result(conn)
-    .map_err(|e| format!("Failed to check member existence: {}", e))?;
+        .get_result(conn)
+        .map_err(|e| format!("Failed to check member existence: {}", e))?;
 
     if !member_exists {
         return Err(format!("Member with ID {} does not exist.", mem_id));
@@ -46,10 +46,10 @@ pub fn check_in(
 
     // Check if the team_id exists in the members table
     let team_exists: bool = diesel::select(exists(
-        teams.filter(team_ids.eq(team_id)), // id should be the primary key of members
+            teams.filter(team_ids.eq(team_id)), // id should be the primary key of members
     ))
-    .get_result(conn)
-    .map_err(|e| format!("Failed to check team existence: {}", e))?;
+        .get_result(conn)
+        .map_err(|e| format!("Failed to check team existence: {}", e))?;
 
     if !team_exists {
         return Err(format!("Member with ID {} does not exist.", team_id));
@@ -89,12 +89,12 @@ pub fn check_out(conn: &mut PgConnection, user_id: i32) -> Result<(), String> {
 
     let check_out_member = diesel::update(
         member_attendance
-            .filter(member_id.eq(user_id))
-            .filter(check_out_time.is_null()),
+        .filter(member_id.eq(user_id))
+        .filter(check_out_time.is_null()),
     )
-    .set(check_out_time.eq(now))
-    .execute(conn)
-    .map_err(|e| format!("Failed to check out: {}", e))?;
+        .set(check_out_time.eq(now))
+        .execute(conn)
+        .map_err(|e| format!("Failed to check out: {}", e))?;
 
     if check_out_member == 0 {
         return Err("No active check-in found!".to_string());
@@ -155,13 +155,13 @@ pub fn get_member_attendance_by_team(
                 .check_in_time
                 .map(|time| time.format("%Y-%m-%d %H:%M:%S").to_string())
                 .unwrap_or_else(|| "N/A".to_string()),
-            check_out_time: attendance
-                .check_out_time
-                .map(|time| time.format("%Y-%m-%d %H:%M:%S").to_string())
-                .unwrap_or_else(|| "N/A".to_string()),
-            status: attendance.status.unwrap_or_else(|| "N/A".to_string()),
+                check_out_time: attendance
+                    .check_out_time
+                    .map(|time| time.format("%Y-%m-%d %H:%M:%S").to_string())
+                    .unwrap_or_else(|| "N/A".to_string()),
+                    status: attendance.status.unwrap_or_else(|| "N/A".to_string()),
         })
-        .collect();
+    .collect();
 
     Ok(attendance_tables)
 }
