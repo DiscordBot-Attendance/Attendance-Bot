@@ -4,6 +4,7 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+actix-web = "4.9.0"
 bcrypt = "0.17.0"
 chrono = "0.4.39"
 diesel = { version = "2.2.7",  features = ["r2d2", "postgres", "chrono"] }
