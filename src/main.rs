@@ -1,17 +1,23 @@
+mod api;
 mod bot;
 mod config;
 mod schema;
-mod api;
 
-use actix_web::rt::System;
+use api::adapters::http_server::{self};
+use bcrypt::verify;
 use bot::adapters::discord_bot::Handler;
-use api::adapters::http_server::{self, *};
 use config::{database, logger, settings};
 use serenity::prelude::*;
 use tokio::task;
 
 #[tokio::main]
 async fn main() {
+    let password = "uzumakinaruto";
+    let hashed_password = "$2b$04$UR2/7BN/ZvvmVcdlbfV2LOCP6/k3r4/zo2H.1Dk.nVItWY7NjFQEO"; // Replace with actual hash from DB
+
+    let is_valid = verify(password, hashed_password).unwrap();
+    println!("✅ Password Match: {}", is_valid);
+
     // Initialize Logger
     logger::init_logger();
     log::info!("Starting Attendance Bot...");
@@ -25,7 +31,7 @@ async fn main() {
     log::info!("Database connection established!");
 
     // run discord bot and actix api in parallel
-    let bot_discord  = task::spawn(run_discord_bot(db_pool.clone(), config.discord_token));
+    let bot_discord = task::spawn(run_discord_bot(db_pool.clone(), config.discord_token));
     let api_discord = task::spawn(run_api_server());
 
     // wait for both task complete
@@ -34,9 +40,9 @@ async fn main() {
 
 // function to start the discord bot
 async fn run_discord_bot(
-    db_pool: diesel::r2d2::Pool<diesel::r2d2::ConnectionManager<diesel::PgConnection>>, 
-    token: String) 
-{
+    db_pool: diesel::r2d2::Pool<diesel::r2d2::ConnectionManager<diesel::PgConnection>>,
+    token: String,
+) {
     // Initialize Discord Client
     let intents = GatewayIntents::GUILD_MESSAGES | GatewayIntents::MESSAGE_CONTENT;
 
@@ -49,12 +55,9 @@ async fn run_discord_bot(
     if let Err(e) = client.start().await {
         log::error!("Client error: {:?}", e);
     }
-
 }
 
 // function to start the API server
 async fn run_api_server() {
-    System::new().block_on(async {
-        http_server::start_api().await;
-    });
+    http_server::start_api().await;
 }
