@@ -1,3 +1,4 @@
+use serde::{Deserialize, Serialize};
 use tabled::Tabled;
 
 /// Represents a team in a tabular format for display purposes.
@@ -5,7 +6,7 @@ use tabled::Tabled;
 /// # Fields
 /// * `name` - The name of the team.
 /// * `created_at` - The timestamp when the team was created, formatted as a string.
-#[derive(Debug, Tabled)]
+#[derive(Debug, Tabled, Serialize, Deserialize)]
 pub struct TeamTable {
     pub name: String,
     pub created_at: String,
