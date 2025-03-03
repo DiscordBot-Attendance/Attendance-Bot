@@ -12,12 +12,6 @@ use tokio::task;
 
 #[tokio::main]
 async fn main() {
-    let password = "uzumakinaruto";
-    let hashed_password = "$2b$04$UR2/7BN/ZvvmVcdlbfV2LOCP6/k3r4/zo2H.1Dk.nVItWY7NjFQEO"; // Replace with actual hash from DB
-
-    let is_valid = verify(password, hashed_password).unwrap();
-    println!("✅ Password Match: {}", is_valid);
-
     // Initialize Logger
     logger::init_logger();
     log::info!("Starting Attendance Bot...");
