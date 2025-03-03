@@ -1,5 +1,5 @@
-use crate::bot::domain::model::{NewUser, User};
-use bcrypt::{hash, verify};
+use crate::bot::domain::model::NewUser;
+use bcrypt::hash;
 use chrono::Utc;
 use diesel::prelude::*;
 
