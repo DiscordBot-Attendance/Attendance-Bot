@@ -40,33 +40,3 @@ pub fn register_admin(
 
     Ok(())
 }
-
-/// Authenticates an admin user by verifying their password.
-///
-/// # Arguments
-/// * `conn` - A mutable reference to the PostgreSQL connection.
-/// * `dc_id` - The Discord ID of the user.
-/// * `password` - The password to verify.
-///
-/// # Returns
-/// Returns `Ok(true)` if the password is valid, otherwise `Ok(false)`.
-///
-/// # Errors
-/// Returns an error if:
-/// - The user is not found in the database.
-/// - Password verification fails.
-pub fn authentication_admin(
-    conn: &mut PgConnection,
-    dc_id: &str,
-    password: &str,
-) -> Result<bool, String> {
-    use crate::schema::users::dsl::users;
-    use crate::schema::users::*;
-
-    let user: User = users
-        .filter(discord_id.eq(dc_id))
-        .first::<User>(conn)
-        .map_err(|_| "User not found")?;
-
-    Ok(verify(password, &user.password_hash).map_err(|_| "Invalid password")?)
-}
