@@ -1,8 +1,8 @@
-# Attendance Bot - Discord
+# Attendance Bot - Discord & API (Beta)
 
 ## 📌 Overview
 
-Attendance Bot is a Discord bot designed for managing team attendance, tracking check-ins and check-outs, and handling team memberships. This bot allows admins to create teams, add members, and monitor attendance through simple Discord commands.
+Attendance Bot is a Discord bot designed for managing team attendance, tracking check-ins and check-outs, and handling team memberships. This bot allows admins to create teams, add members, and monitor attendance through simple Discord commands and a RESTful API.
 
 ## ⚡ Features
 
@@ -10,12 +10,13 @@ Attendance Bot is a Discord bot designed for managing team attendance, tracking 
 - Team creation and member management
 - Attendance check-in & check-out
 - View team and member attendance records
+- REST API for external integrations (Beta)
 
 ## 🛠 Setup & Installation
 
 ### Prerequisites
 
-Before running the bot, ensure you have the following:
+Before running the bot and API, ensure you have the following:
 
 - Rust installed (latest stable version)
 - PostgreSQL installed and running
@@ -38,12 +39,12 @@ Before running the bot, ensure you have the following:
    ```sh
    diesel migration run
    ```
-4. Build and run the bot:
+4. Build and run the bot and API:
    ```sh
    cargo run
    ```
 
-## 🖥 Usage
+## 🖥 Bot Usage
 
 ### 📌 **Bot Commands**
 
@@ -69,18 +70,104 @@ Before running the bot, ensure you have the following:
 
 ⚠️ **Note:** Ensure you have the correct permissions and passwords for Admin-related commands.
 
+---
+
+## 🌍 API Usage (Beta)
+
+### **Base URL:**
+
+```
+Soon
+```
+
+### **Authentication**
+
+#### **Login (POST /login)**
+
+Authenticate and receive a token.
+
+##### **Request:**
+
+```json
+{
+  "username": "admin_discord_id",
+  "password": "your_password"
+}
+```
+
+##### **Response:**
+
+```json
+{
+  "token": "random_token"
+}
+```
+
+### **Team Management**
+
+#### **Show Team List (GET /teams/{admin_discord_id})**
+
+Retrieve all teams created by an admin.
+
+##### **Response:**
+
+```json
+[
+  {
+    "name": "fufufafa",
+    "created_at": "2025-02-21 02:36:29"
+  }
+]
+```
+
+### **Member Management**
+
+#### **Show Member List (GET /members/{team_name})**
+
+Retrieve all members in a team.
+
+##### **Response:**
+
+```json
+[
+  {
+    "username": "your_name",
+    "join_date": "2025-02-21"
+  }
+]
+```
+
+### **Attendance Tracking**
+
+#### **Show Attendance List (GET /attendance/{team_name})**
+
+Retrieve attendance records of members in a team.
+
+##### **Response:**
+
+```json
+[
+  {
+    "username": "your_name",
+    "check_in_time": "2025-02-21 02:40:46",
+    "check_out_time": "2025-02-21 02:40:56",
+    "status": "Present"
+  }
+]
+```
+
+---
+
 ## 📜 License
 
 This project is open-source under the MIT License.
 
 ## 🚀 Future Enhancements
 
-- REST API integration (coming soon)
 - Webhooks for real-time attendance updates
 - Terminal-based bot management tool
+- API authentication improvements
 
 ## 💡 Contributing
 
 Contributions are welcome! Feel free to submit issues and pull requests.
-
----
