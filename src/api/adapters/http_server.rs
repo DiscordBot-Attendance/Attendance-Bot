@@ -1,6 +1,7 @@
 use std::env;
 
 use crate::api::adapters::controllers::auth_controller::login;
+use crate::api::adapters::controllers::team_controller::show_teams_handler;
 use crate::config::database::establish_connection;
 use actix_web::{web, App, HttpResponse, HttpServer, Responder};
 use dotenvy::dotenv;
@@ -29,6 +30,7 @@ pub async fn start_api() {
             .app_data(db_pool_data.clone()) // Pass the wrapped pool to the app
             .route("/", web::get().to(health_check))
             .route("/login", web::post().to(login))
+            .route("/teams/{admin_discord_id}", web::get().to(show_teams_handler))
     })
     .bind(&api_address)
     .expect("Failed to bind API server")
