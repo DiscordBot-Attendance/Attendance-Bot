@@ -66,8 +66,6 @@ impl EventHandler for Handler {
             attendance::handle_check_out(&ctx, &msg, &mut db_conn).await;
         } else if msg.content.starts_with("!AB register") {
             auth::handle_register(&ctx, &msg, &mut db_conn).await;
-        } else if msg.content.starts_with("!AB login") {
-            auth::handle_login(&ctx, &msg, &mut db_conn).await;
         } else if msg.content.starts_with("!AB create_team") {
             teams::handle_create_team(&ctx, &msg, &mut db_conn).await;
         } else if msg.content.starts_with("!AB add_member") {
