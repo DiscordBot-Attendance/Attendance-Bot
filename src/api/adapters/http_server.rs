@@ -1,5 +1,6 @@
 use std::env;
 
+use crate::api::adapters::controllers::attendance_controller::show_member_attendance_handler;
 use crate::api::adapters::controllers::team_controller::show_teams_handler;
 use crate::api::adapters::controllers::{
     auth_controller::login, member_controller::show_member_handler,
@@ -37,6 +38,7 @@ pub async fn start_api() {
                 web::get().to(show_teams_handler),
             )
             .route("/members/{team_name}", web::get().to(show_member_handler))
+            .route("/attendance/{team_name}", web::get().to(show_member_attendance_handler))
     })
     .bind(&api_address)
     .expect("Failed to bind API server")
