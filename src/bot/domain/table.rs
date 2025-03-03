@@ -17,7 +17,7 @@ pub struct TeamTable {
 /// # Fields
 /// * `username` - The username of the member.
 /// * `join_date` - The date when the member joined, formatted as a string.
-#[derive(Debug, Tabled)]
+#[derive(Debug, Tabled, Serialize, Deserialize)]
 pub struct MemberTable {
     pub username: String,
     pub join_date: String,
@@ -30,7 +30,7 @@ pub struct MemberTable {
 /// * `check_in_time` - The timestamp when the member checked in, formatted as a string.
 /// * `check_out_time` - The timestamp when the member checked out, formatted as a string.
 /// * `status` - The status of the attendance (e.g., "Present", "Late").
-#[derive(Debug, Tabled)]
+#[derive(Debug, Tabled, Serialize, Deserialize)]
 pub struct MemberAttendanceTable {
     pub username: String,
     pub check_in_time: String,
