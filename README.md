@@ -1,5 +1,5 @@
 # Attendance Bot - Discord & API (Beta)
-
+s
 ## 📌 Overview
 
 Attendance Bot is a Discord bot designed for managing team attendance, tracking check-ins and check-outs, and handling team memberships. This bot allows admins to create teams, add members, and monitor attendance through simple Discord commands and a RESTful API.
